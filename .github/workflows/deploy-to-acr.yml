@@ -23,19 +23,22 @@ jobs:
 
       - name: Docker Login to ACR
         run: |
+          set -e
           az acr login --name ${{ secrets.ACR_NAME }}
 
       - name: Create .env file
         env:
           ENV_FILE: ${{ secrets.ENV }}
         run: |
-          echo "$ENV_FILE" > .env
+          set -e
+          (umask 077; echo "$ENV_FILE" > .env)
 
       - name: Build and Push Docker image
         env:
           AZURE_REGISTRY_NAME: ${{ secrets.ACR_NAME }}
-          IMAGE_NAME: my-app # Change as needed
+          IMAGE_NAME: ${{ github.event.repository.name }}
         run: |
+          set -e
           docker build -t $AZURE_REGISTRY_NAME.azurecr.io/$IMAGE_NAME:${{ github.sha }} .
           docker push $AZURE_REGISTRY_NAME.azurecr.io/$IMAGE_NAME:${{ github.sha }}
 
